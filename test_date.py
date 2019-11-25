@@ -1,5 +1,5 @@
 import unittest
-import date
+import core
 
 def is_leap(yg):
     return yg % 400 == 0 or yg % 4 == 0 and yg % 100 != 0
@@ -11,12 +11,12 @@ class TestDate(unittest.TestCase):
         yi, wi, di = 2001, 1, 1
         leap, weeks = False, 52
         while yg < 2401:
-            d = date.from_gregorian(yg, mg, dg)
+            d = core.from_gregorian(yg, mg, dg)
             if dp is not None:
                 self.assertEqual(d, dp + 1)
-            self.assertEqual(date.to_gregorian(d), (yg, mg, dg))
-            self.assertEqual(date.from_iso_week_date(yi, wi, di), d)
-            self.assertEqual(date.to_iso_week_date(d), (yi, wi, di))
+            self.assertEqual(core.to_gregorian(d), (yg, mg, dg))
+            self.assertEqual(core.from_iso_week_date(yi, wi, di), d)
+            self.assertEqual(core.to_iso_week_date(d), (yi, wi, di))
             dp = d
             if mg == 2 and dg == 28:
                 if leap:
