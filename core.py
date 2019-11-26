@@ -30,6 +30,14 @@ def to_iso_week_date(d):
     yi, wy = divmoddiv(28*w + 20 - 4*(5269 - w)//20871*3//4*4, 1461, 28)
     return yi, wy + 1, dw + 1
 
+def easter(y):
+    c = y//100 + 1
+    g = y % 19
+    e = (15 - 11*g + 3*c//4 - (5 + 8*c)//25) % 30
+    d = e - (e + g//11) // 29
+    p = 365*y + y//4 - y//100 + y//400 + 20 + d
+    return p + 1 + (3 - p)%7
+
 def weekday(d):
     """Internal day counter to range from Monday = 0 to Sunday = 6."""
     return (d + 2) % 7

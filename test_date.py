@@ -9,7 +9,7 @@ class TestDate(unittest.TestCase):
         dp = None
         yg, mg, dg = 2001, 1, 1
         yi, wi, di = 2001, 1, 1
-        leap, weeks = False, 52
+        weeks = 52
         while yg < 2401:
             d = core.from_gregorian(yg, mg, dg)
             if dp is not None:
@@ -19,7 +19,7 @@ class TestDate(unittest.TestCase):
             self.assertEqual(core.to_iso_week_date(d), (yi, wi, di))
             dp = d
             if mg == 2 and dg == 28:
-                if leap:
+                if is_leap(yg):
                     dg = 29
                 else:
                     mg = 3
@@ -32,7 +32,6 @@ class TestDate(unittest.TestCase):
                 if mg > 12:
                     yg += 1
                     mg = 1
-                    leap = is_leap(yg)
             di += 1
             if di > 7:
                 wi += 1
@@ -44,3 +43,16 @@ class TestDate(unittest.TestCase):
                     weeks = 53
                 else:
                     weeks = 52
+
+    def assertEaster(self, y, m, d):
+        easter = core.easter(y)
+        self.assertEqual(core.to_gregorian(easter), (y, m, d))
+
+    def test_easter(self):
+        self.assertEaster(1818, 3, 22)
+        self.assertEaster(1999, 4, 4)
+        self.assertEaster(2000, 4, 23)
+        self.assertEaster(2001, 4, 15)
+        self.assertEaster(2002, 3, 31)
+        self.assertEaster(2008, 3, 23)
+        self.assertEaster(2011, 4, 24)
