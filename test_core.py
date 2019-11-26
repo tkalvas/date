@@ -17,6 +17,7 @@ class TestDate(unittest.TestCase):
             self.assertEqual(core.to_gregorian(d), (yg, mg, dg))
             self.assertEqual(core.from_iso_week_date(yi, wi, di), d)
             self.assertEqual(core.to_iso_week_date(d), (yi, wi, di))
+            self.assertEqual(core.weekday(d) + 1, di)
             dp = d
             if mg == 2 and dg == 28:
                 if is_leap(yg):
