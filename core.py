@@ -1,14 +1,25 @@
+"""Core functions of Gregorian date manipulation.
+See https://s2.org/~chery/date.html
+The day 0 of the internal day counter is 0000-03-01 in the proleptic
+Gregorian calendar.
+
+In Python the //, %, and divmod operators round towards negative infinity.
+Translations of these equations to other languages should take this into
+account."""
+
 week_epoch = -58
 
 def divmoddiv(a, b, c):
     i, j = divmod(a, b)
     return i, j // c
 
+def from_y_dy(y, dy):
+    return 365*y + y//4 - y//100 + y//400 + dy
+
 def from_gregorian(yg, mg, dg):
     """(Year, month, day) of Gregorian date to internal day counter."""
     y, my = divmod(12*yg + mg - 3, 12)
-    dy = (153*my + 2)//5 + dg - 1
-    return 365*y + y//4 - y//100 + y//400 + dy
+    return from_y_dy(y, (153*my + 2)//5 + dg - 1)
 
 def to_gregorian(d):
     """Internal day counter to (year, month, day) of Gregorian date."""
@@ -31,12 +42,11 @@ def to_iso_week_date(d):
     return yi, wy + 1, dw + 1
 
 def easter(y):
+    """Internal day counter of easter in year."""
     c = y//100 + 1
     g = y % 19
     e = (15 - 11*g + 3*c//4 - (5 + 8*c)//25) % 30
-    d = e - (e + g//11) // 29
-    p = 365*y + y//4 - y//100 + y//400 + 20 + d
-    return p + 1 + (3 - p)%7
+    return 4 + (from_y_dy(y, 20 + e - (e + g//11) // 29) + 3) // 7 * 7
 
 def weekday(d):
     """Internal day counter to range from Monday = 0 to Sunday = 6."""
