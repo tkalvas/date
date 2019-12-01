@@ -51,3 +51,15 @@ def easter(y):
 def weekday(d):
     """Internal day counter to range from Monday = 0 to Sunday = 6."""
     return (d + 2) % 7
+
+def ceiling_weekday(d, wd):
+    return (d + 8 - wd) // 7 * 7 - 2 + wd
+
+def next_weekday(d, wd):
+    return (d + 9 - wd) // 7 * 7 - 2 + wd
+
+def previous_weekday(d, wd):
+    return (d + 1 - wd) // 7 * 7 - 2 + wd
+
+def floor_weekday(d, wd):
+    return (d + 2 - wd) // 7 * 7 - 2 + wd
