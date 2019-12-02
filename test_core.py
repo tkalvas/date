@@ -1,15 +1,16 @@
 import unittest
 import core
 import step
-from itertools import islice
+from itertools import count, islice
 
 class TestDate(unittest.TestCase):
     def test_exhaustive(self):
-        dp = 730790
-        for g, w, in islice(zip(step.generate_gregorian(dp + 1),
-                                step.generate_iso_week_date(dp + 1)),
-                            0, 146097):
-            self.assertEqual(g.day, dp + 1)
+        base = 730791
+        for g, w, d in islice(zip(step.generate_gregorian(base),
+                                  step.generate_iso_week_date(base),
+                                  count(base)),
+                              0, 146097):
+            self.assertEqual(g.day, d)
             self.assertEqual(g.day, w.day)
             self.assertEqual(g.weekday + 1, w.day_of_week)
             self.assertEqual(core.to_gregorian(g.day),
@@ -22,7 +23,6 @@ class TestDate(unittest.TestCase):
             self.assertEqual(core.from_iso_week_date(w.year, w.week,
                                                      w.day_of_week),
                              w.day)
-            dp = g.day
 
     def assertEaster(self, y, m, d):
         easter = core.easter(y)
@@ -36,3 +36,36 @@ class TestDate(unittest.TestCase):
         self.assertEaster(2002, 3, 31)
         self.assertEaster(2008, 3, 23)
         self.assertEaster(2011, 4, 24)
+        self.assertEaster(2049, 4, 18)
+
+    def test_ceiling_weekday(self):
+        for wd in range(0, 7):
+            for d in range(0, 14):
+                r = core.ceiling_weekday(d, wd)
+                self.assertGreaterEqual(r, d)
+                self.assertLess(r, d + 7)
+                self.assertEqual(wd, core.weekday(r))
+
+    def test_next_weekday(self):
+        for wd in range(0, 7):
+            for d in range(0, 14):
+                r = core.next_weekday(d, wd)
+                self.assertGreater(r, d)
+                self.assertLessEqual(r, d + 7)
+                self.assertEqual(wd, core.weekday(r))
+
+    def test_previous_weekday(self):
+        for wd in range(0, 7):
+            for d in range(0, 14):
+                r = core.previous_weekday(d, wd)
+                self.assertGreaterEqual(r, d - 7)
+                self.assertLess(r, d)
+                self.assertEqual(wd, core.weekday(r))
+
+    def test_floor_weekday(self):
+        for wd in range(0, 7):
+            for d in range(0, 14):
+                r = core.floor_weekday(d, wd)
+                self.assertGreater(r, d - 7)
+                self.assertLessEqual(r, d)
+                self.assertEqual(wd, core.weekday(r))

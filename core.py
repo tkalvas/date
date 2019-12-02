@@ -14,6 +14,7 @@ def divmoddiv(a, b, c):
     return i, j // c
 
 def from_y_dy(y, dy):
+    """(Year, day-in-year (zero = March 1st)) to internal day counter."""
     return 365*y + y//4 - y//100 + y//400 + dy
 
 def from_gregorian(yg, mg, dg):
@@ -53,13 +54,17 @@ def weekday(d):
     return (d + 2) % 7
 
 def ceiling_weekday(d, wd):
+    """First day which is weekday wd and not less than day d."""
     return (d + 8 - wd) // 7 * 7 - 2 + wd
 
 def next_weekday(d, wd):
+    """First day which is weekday wd and greater than day d."""
     return (d + 9 - wd) // 7 * 7 - 2 + wd
 
 def previous_weekday(d, wd):
+    """Last day which is weekday wd and less than day d."""
     return (d + 1 - wd) // 7 * 7 - 2 + wd
 
 def floor_weekday(d, wd):
+    """Last day which is weekday wd and not greater than day d."""
     return (d + 2 - wd) // 7 * 7 - 2 + wd
