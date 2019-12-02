@@ -36,6 +36,7 @@ class TestDate(unittest.TestCase):
         self.assertEaster(2002, 3, 31)
         self.assertEaster(2008, 3, 23)
         self.assertEaster(2011, 4, 24)
+        self.assertEaster(2038, 4, 25)
         self.assertEaster(2049, 4, 18)
 
     def test_ceiling_weekday(self):
