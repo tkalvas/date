@@ -45,6 +45,15 @@ def lookup(years):
             r += chr(48 + years[i][m] - 17)
     return r
 
+def lookup2(years):
+    r = ''
+    for i in range(0, 70, 2):
+        for m in range(0, 12):
+            l = years[i][m] - 17
+            h = years[i+1][m] - 17
+            r += chr(42 + 7*h + l)
+    return r
+
 settings = {
     "comma": ";",
     "year": "A1",
@@ -59,6 +68,9 @@ def x_year():
 
 def x_month():
     return settings["month"]
+
+def x_div(a, b):
+    return 'quotient(' + a + x_comma() + b + ')'
 
 def x_c():
     return '(quotient(' + x_year() + x_comma() + '100)+1)'
@@ -80,19 +92,35 @@ def x_weekday():
         x_year() + x_comma() + '400)' + x_comma() + '7)'
 
 def x_easter():
+    """Led to longer formula than easter2 because of duplication of pfm."""
     return '(' + x_pfm() + '+6-mod(' + x_pfm() + '+' + x_weekday() +\
         x_comma() + '7))'
+
+def x_easter2():
+    """n = y + y//4 - y//100 + y//400; (n+23+pfm)//7*7-(n+17)"""
+    return '(' + x_div('(' + x_year() + '+' + x_div(x_year(), '4') + '-' +
+                       x_div(x_year(), '100') + '+' + x_div(x_year(), '400') +
+                       '+23+' + x_pfm() + ')', '7') + '*7-' + x_year() + '-' +\
+                       x_div(x_year(), '4') + '+' + x_div(x_year(), '100') +\
+                       '-' + x_div(x_year(), '400') + '-17)'
 
 def x_leap():
     return '((date(' + x_year() + x_comma() + '3' + x_comma() + '1)-date(' +\
         x_year() + x_comma() + '2' + x_comma() + '28))-1)'
 
 def x_index():
-    return '24*' + x_easter() + '+12*' + x_leap() + '+' + x_month()
+    return '24*' + x_easter2() + '+12*' + x_leap() + '+' + x_month()
 
 def formula(years):
     return "=17+mid(\"" + lookup(years) + "\"" + x_comma() + x_index() +\
         x_comma() + "1)"
+
+def formula2(years):
+    """something is wrong still"""
+    return "=17+mod(" + x_div("code(mid(\"" + lookup2(years) + "\"" + x_comma() +
+                          '12*' + x_easter2() + '+' + x_month() + x_comma() +
+                          "1))",
+                          "6*" + x_leap() + "+1") + x_comma() + "7)"
 
 def main():
     years = {}
@@ -109,9 +137,12 @@ def main():
         ys.append(year_months(years[i]))
         tots.append(reduce(add, ys[-1]))
     print(formula(ys))
+    print(formula2(ys))
     print('=' + x_easter())
+    print('=' + x_easter2())
     print('=' + x_index())
     print(tots)
+    print(lookup2(ys))
     #print([lookup(ys)[24*i+12+2-1] for i in range(0, 35)])
     print(lookup(ys)[601])
     print()
