@@ -20,7 +20,7 @@ def workday(g, easter):
     md = g.month, g.day_of_month
     if g.weekday >= 5:
         return False
-    if md in [(1, 1), (5, 1), (12, 6), (12, 24), (12, 25), (12, 26)]:
+    if md in [(1, 1), (1, 6), (5, 1), (12, 6), (12, 24), (12, 25), (12, 26)]:
         return False
     if g.day - easter in [-2, 1, 39]:
         return False
@@ -130,23 +130,23 @@ def main():
             years[i] = year
         if len(years) == 70:
             break
-    print(years)
+    #print(years)
     ys = []
     tots = []
     for i in range(0, 70):
         ys.append(year_months(years[i]))
         tots.append(reduce(add, ys[-1]))
-    print(formula(ys))
+    #print(formula(ys))
     print(formula2(ys))
-    print('=' + x_easter())
-    print('=' + x_easter2())
-    print('=' + x_index())
-    print(tots)
-    print(lookup2(ys))
+    #print('=' + x_easter())
+    #print('=' + x_easter2())
+    #print('=' + x_index())
+    #print(tots)
+    #print(lookup2(ys))
     #print([lookup(ys)[24*i+12+2-1] for i in range(0, 35)])
-    print(lookup(ys)[601])
-    print()
-    print(year_type(2019), year_months(2019))
+    #print(lookup(ys)[601])
+    #print()
+    #print(year_type(2019), year_months(2019))
 
 if __name__ == '__main__':
     main()
