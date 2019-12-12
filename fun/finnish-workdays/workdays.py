@@ -108,6 +108,11 @@ def x_leap():
     return '((date(' + x_year() + x_comma() + '3' + x_comma() + '1)-date(' +\
         x_year() + x_comma() + '2' + x_comma() + '28))-1)'
 
+def x_leap2():
+    """7 if leap year, 1 if not"""
+    return '6*(date(' + x_year() + x_comma() + '3' + x_comma() + '1)-date(' +\
+        x_year() + x_comma() + '2' + x_comma() + '28))-5'
+
 def x_index():
     return '24*' + x_easter2() + '+12*' + x_leap() + '+' + x_month()
 
@@ -116,11 +121,10 @@ def formula(years):
         x_comma() + "1)"
 
 def formula2(years):
-    """something is wrong still"""
     return "=17+mod(" + x_div("code(mid(\"" + lookup2(years) + "\"" + x_comma() +
                           '12*' + x_easter2() + '+' + x_month() + x_comma() +
-                          "1))",
-                          "6*" + x_leap() + "+1") + x_comma() + "7)"
+                          "1))-42",
+                          x_leap2()) + x_comma() + "7)"
 
 def main():
     years = {}
