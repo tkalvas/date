@@ -55,10 +55,14 @@ def lookup2(years):
     return r
 
 settings = {
-    "comma": ";",
-    "year": "A1",
-    "month": "A2"
+    "comma": ",",
+    "year": "year(B2)",
+    "month": "month(B2)",
+    "day": "B2"
 }
+
+def x_call(name):
+    return lambda *args: name + '(' + x_comma().join(map(str, args)) + ')'
 
 def x_comma():
     return settings["comma"]
@@ -69,49 +73,69 @@ def x_year():
 def x_month():
     return settings["month"]
 
-def x_div(a, b):
-    return 'quotient(' + a + x_comma() + b + ')'
+def x_day():
+    return settings["day"]
+
+x_day_of_month = x_call('day')
+x_div = x_call('quotient')
+x_mod = x_call('mod')
+x_choose = x_call('choose')
+x_date = x_call('date')
+x_weekday = x_call('weekday')
+x_code = x_call('code')
+x_mid = x_call('mid')
+x_iferror = x_call('iferror')
+x_if = x_call('if')
+x_and = x_call('and')
+x_match = x_call('match')
+
+def x_set(*args):
+    return '{' + x_comma().join(map(str, args)) + '}'
+
+def x_parens(arg):
+    return '(' + arg + ')'
 
 def x_c():
-    return '(quotient(' + x_year() + x_comma() + '100)+1)'
+    return x_parens(x_div(x_year(), 100) + '+1')
 
 def x_g():
-    return 'mod(' + x_year() + x_comma() + '19)'
+    return x_mod(x_year(), 19)
 
 def x_e():
-    return 'mod(225-11*' + x_g() + '+quotient(3*' + x_c() + x_comma() +\
-        '4)-quotient(5+8*' + x_c() + x_comma() + '25)' + x_comma() + '30)'
+    return x_mod('255-11*' + x_g() + '+' + x_div('3*' + x_c(), 4) +\
+                 '-' + x_div('5+8*' + x_c(), 25), 30)
 
 def x_pfm():
-    return x_e() + '-quotient(' + x_e() + '+quotient(' + x_g() +\
-        x_comma() + '11)' + x_comma() + '29)'
+    return x_e() + '-' + x_div(x_e() + '+' + x_div(x_g(), 11), 29)
 
-def x_weekday():
+def x_eweekday():
     return 'mod(2+' + x_year() + '+quotient(' + x_year() + x_comma() +\
         '4)-quotient(' + x_year() + x_comma() + '100)+quotient(' +\
         x_year() + x_comma() + '400)' + x_comma() + '7)'
 
 def x_easter():
     """Led to longer formula than easter2 because of duplication of pfm."""
-    return '(' + x_pfm() + '+6-mod(' + x_pfm() + '+' + x_weekday() +\
+    return '(' + x_pfm() + '+6-mod(' + x_pfm() + '+' + x_eweekday() +\
         x_comma() + '7))'
 
 def x_easter2():
     """n = y + y//4 - y//100 + y//400; (n+23+pfm)//7*7-(n+17)"""
-    return '(' + x_div('(' + x_year() + '+' + x_div(x_year(), '4') + '-' +
-                       x_div(x_year(), '100') + '+' + x_div(x_year(), '400') +
-                       '+23+' + x_pfm() + ')', '7') + '*7-' + x_year() + '-' +\
-                       x_div(x_year(), '4') + '+' + x_div(x_year(), '100') +\
-                       '-' + x_div(x_year(), '400') + '-17)'
+    return x_parens(x_div(x_year() + '+' + x_div(x_year(), 4) + '-'
+                          + x_div(x_year(), 100) + '+' + x_div(x_year(), 400)
+                          + '+23+' + x_pfm(),
+                          7)
+                    + '*7-' + x_year() + '-' + x_div(x_year(), 4) + '+'
+                    + x_div(x_year(), 100) + '-' + x_div(x_year(), 400) + '-17')
 
 def x_leap():
-    return '((date(' + x_year() + x_comma() + '3' + x_comma() + '1)-date(' +\
-        x_year() + x_comma() + '2' + x_comma() + '28))-1)'
+    return x_parens(x_parens(x_date(x_year(), 3, 1) + '-'
+                             + x_date(x_year(), 2, 29))
+                    + '-1')
 
 def x_leap2():
     """7 if leap year, 1 if not"""
-    return '6*(date(' + x_year() + x_comma() + '3' + x_comma() + '1)-date(' +\
-        x_year() + x_comma() + '2' + x_comma() + '28))-5'
+    return '6*' + x_parens(x_date(x_year(), 3, 1) + '-'
+                           + x_date(x_year(), 2, 28)) + '-5'
 
 def x_index():
     return '24*' + x_easter2() + '+12*' + x_leap() + '+' + x_month()
@@ -125,6 +149,34 @@ def formula2(years):
                           '12*' + x_easter2() + '+' + x_month() + x_comma() +
                           "1))-42",
                           x_leap2()) + x_comma() + "7)"
+
+def easter_diff():
+    return x_day() + '-' + x_parens(x_date(x_year(), 3, 22) + '+' + x_easter2())
+
+def weekend():
+    return x_choose(x_weekday(x_day(), 3) + '+1', *[0, 0, 0, 0, 0, 1, 1])
+
+def fixed_holiday():
+    return x_iferror(x_match('31*' + x_mod('12*' + x_year() + '+' + x_month()
+                                           + '-3',
+                                           12)
+                             + '+' + x_day_of_month(x_day()),
+                             x_set(63, 285, 303, 304, 305, 311, 316),
+                             0),
+                     0)
+
+def easter_holiday():
+    return x_iferror(x_match(easter_diff(), x_set(-2, 1, 39), 0), 0)
+
+def midsummer_eve():
+    return x_if(x_and(x_div(x_day() + '-' + x_date(x_year(), 6, 19) + '+364', 7)
+                      + '=52',
+                      x_weekday(x_day(), 3) + '=4'),
+                1, 0)
+
+def day_formula():
+    return '=' + weekend() + '+' + fixed_holiday() + '+' + easter_holiday() +\
+        '+' + midsummer_eve()
 
 def main():
     years = {}
@@ -151,6 +203,8 @@ def main():
     #print(lookup(ys)[601])
     #print()
     #print(year_type(2019), year_months(2019))
+    print()
+    print(day_formula())
 
 if __name__ == '__main__':
     main()
