@@ -15,5 +15,7 @@ date_test: date_test.o date.o
 date_profile:	date_profile.o date.o
 	gcc -o date_profile $^
 
-date_test.o: cheat.h cheats.h
+date_test.o: cheat.h cheats.h date.h
+date_profile.o: date.h
+date.o: date.h
 
