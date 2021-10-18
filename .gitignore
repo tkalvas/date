@@ -8,3 +8,5 @@ __pycache__
 date_profile
 date_test
 *.o
+cheat.h
+cheats.h
