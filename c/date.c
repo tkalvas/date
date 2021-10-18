@@ -37,7 +37,7 @@ int parse_3_digits(
   return 100 * (source[0] - '0') + 10 * (source[1] - '0') + (source[2] - '0');
 }
 
-int dys[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+int dys[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365};
 
 int parse_iso8601_date(
   const char *source, int length,
@@ -99,9 +99,12 @@ int parse_iso8601_date(
   if (instant->month >= 12)
     tk_error("month number too large", NULL, instant->month);
   int dy = dys[instant->month];
-  if (instant->month >= 2 && leap)
+  int maxd = dys[instant->month + 1] - dy;
+  if (instant->month >= 2 && leap) {
     dy++;
-  if (instant->day > dy)
+    maxd++;
+  }
+  if (instant->day > maxd)
     tk_error("day number too large", NULL, instant->day);
   instant->day_of_year = dy + instant->day;
   instant->day_number = 146097 * (century >> 2) + 36524 * (century & 3) + 365 * year_in_century + instant->day_of_year;
