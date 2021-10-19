@@ -47,6 +47,12 @@ int parse_iso8601_date(
   /* +yyyyy-mm-dd */
   /* yyyy-ddd */
   /* yyyy-Www-d */
+  /* yyyymmdd */
+  /* yyyyddd */
+  /* yyyymm */
+  /* yyyy */
+  /* TBD: */
+  /* cc ccd */
   int orig_length = length;
   int century;
   int year_in_century;
@@ -68,44 +74,36 @@ int parse_iso8601_date(
     else
       leap = !(century & 3);
     instant->year = 100 * century + year_in_century;
-    instant->flags |= TK_INSTANT_YEAR;
     source += 4;
     length -= 4;
   }
   //instant->day_number = 146097 * (century >> 2) + 36524 * (century & 3) + (year_in_century >> 2) + 365 * year_in_century;
   instant->day_number = (century >> 2) - century + (instant->year >> 2) + 365 * instant->year + 1 - leap;
-  if (source[0] != '-') tk_error("bad date separator", source, length);
-  if (source[3] == '-') {
-    if (length < 6) tk_error("month-day too short", source, length);
-    instant->month = parse_2_digits(source + 1, length - 1) - 1;
-    instant->day = parse_2_digits(source + 4, length - 4) - 1;
-    instant->flags |= TK_INSTANT_MONTH | TK_INSTANT_DAY;
-    length -= 6;
-    /* 0.49->0.19 (-O3) */
-    if (instant->month >= 12)
-      tk_error("month number too large", NULL, instant->month);
-    int dy = dys[instant->month];
-    int maxd = dys[instant->month + 1] - dy;
-    if (leap) {
-      if (instant->month >= 2) dy++;
-      if (instant->month == 2) maxd++;
-    }
-    if (instant->day >= maxd)
-      tk_error("day number too large", NULL, instant->day);
-    instant->day_of_year = dy + instant->day;
-    instant->day_number += instant->day_of_year;
-    /* [0.55] instant->day_number = 365 * instant->year + instant->year / 4 - instant->year / 100 + instant->year / 400 + dy;*/
-    instant->flags |= TK_INSTANT_DAY_OF_YEAR | TK_INSTANT_DAY_NUMBER;
-  } else if (source[1] == 'W') {
+  if (!length) {
+    instant->flags |= TK_INSTANT_YEAR;
+    return orig_length;
+  }
+  if (source[0] == '-') {
+    source++;
+    length--;
+  }
+  if (source[0] == 'W') {
     instant->week_year = instant->year;
-    if (length < 6) tk_error("weeknumber-weekday too short", source, length);
-    instant->week = parse_2_digits(source + 2, length - 2) - 1;
-    if (source[4] != '-') tk_error("bad week separator", source, length);
-    if (!isdigit(source[5])) tk_error("weekday not a number", source, length);
-    instant->weekday = source[5] - '0' - 1;
-    instant->flags &= ~TK_INSTANT_YEAR;
+    instant->week = parse_2_digits(source + 1, length - 1) - 1;
+    source += 3;
+    length -= 3;
+    if (!length) {
+      instant->flags |= TK_INSTANT_WEEK_YEAR | TK_INSTANT_WEEK;
+      return orig_length;
+    }
+    if (source[0] == '-') {
+      source++;
+      length--;
+    }
+    if (!isdigit(source[0])) tk_error("weekday not a number", source, length);
+    instant->weekday = source[0] - '0' - 1;
     instant->flags |= TK_INSTANT_WEEK_YEAR | TK_INSTANT_WEEK | TK_INSTANT_WEEKDAY | TK_INSTANT_DAY_NUMBER;
-    length -= 6;
+    length--;
     int soywd = (instant->day_number + 5) % 7;
     if (soywd < 4) {
       instant->day_of_year = -soywd;
@@ -131,13 +129,42 @@ int parse_iso8601_date(
       instant->year++;
     }
     instant->day_number += instant->day_of_year;
+  } else if ((length == 2) || ((length >= 4) && isdigit(source[3]))) {
+    instant->month = parse_2_digits(source, length) - 1;
+    source += 2;
+    length -= 2;
+    if (instant->month >= 12)
+      tk_error("month number too large", NULL, instant->month);
+    if (!length) {
+      instant->flags |= TK_INSTANT_YEAR | TK_INSTANT_MONTH;
+      return orig_length;
+    }
+    if (source[0] == '-') {
+      source++;
+      length--;
+    }
+    instant->day = parse_2_digits(source, length) - 1;
+    length -= 2;
+    /* 0.49->0.19 (-O3) */
+    int dy = dys[instant->month];
+    int maxd = dys[instant->month + 1] - dy;
+    if (leap) {
+      if (instant->month >= 2) dy++;
+      if (instant->month == 2) maxd++;
+    }
+    if (instant->day >= maxd)
+      tk_error("day number too large", NULL, instant->day);
+    instant->day_of_year = dy + instant->day;
+    instant->day_number += instant->day_of_year;
+    /* [0.55] instant->day_number = 365 * instant->year + instant->year / 4 - instant->year / 100 + instant->year / 400 + dy;*/
+    instant->flags |= TK_INSTANT_YEAR | TK_INSTANT_MONTH | TK_INSTANT_DAY | TK_INSTANT_DAY_OF_YEAR | TK_INSTANT_DAY_NUMBER;
   } else {
-    instant->day_of_year = parse_3_digits(source + 1, length - 1) - 1;
+    instant->day_of_year = parse_3_digits(source, length) - 1;
     if (instant->day_of_year > leap + 365)
       tk_error("day of year too large", NULL, instant->day_of_year);
     instant->day_number += instant->day_of_year;
-    instant->flags |= TK_INSTANT_DAY_OF_YEAR | TK_INSTANT_DAY_NUMBER;
-    length -= 4;
+    instant->flags |= TK_INSTANT_YEAR | TK_INSTANT_DAY_OF_YEAR | TK_INSTANT_DAY_NUMBER;
+    length -= 3;
   }
   /* 0.49->0.15 (-O3) */
   /* 0.66->0.21 (-O3)
@@ -155,21 +182,35 @@ int parse_iso8601_time(
   instant->hour = parse_2_digits(source, length);
   if (instant->hour > 23)
     tk_error("hour too large", NULL, instant->hour);
-  if (length == 2) return 0;
-  if (source[2] != ':')
-    tk_error("bad time separator", source, length);
-  instant->minute = parse_2_digits(source + 3, length - 3);
-  if (length == 5) return 0;
-  if (source[5] != ':')
-    tk_error("bad time separator", source, length);
-  instant->second = parse_2_digits(source + 6, length - 6);
+  source += 2;
+  length -= 2;
+  if (!length) {
+    instant->flags |= TK_INSTANT_HOUR;
+    return 0;
+  }
+  if (source[0] == ':') {
+    source++;
+    length--;
+  }
+  instant->minute = parse_2_digits(source, length);
+  source += 2;
+  length -= 2;
+  if (!length) {
+    instant->flags |= TK_INSTANT_HOUR | TK_INSTANT_MINUTE;
+    return 0;
+  }
+  if (source[0] == ':') {
+    source++;
+    length--;
+  }
+  instant->second = parse_2_digits(source, length);
   if (instant->second > (instant->hour == 23 && instant->minute == 59) + 59)
     tk_error("second too large", NULL, instant->second);
   /* +0.01 */
   instant->day_seconds = 60 * (60 * instant->hour + instant->minute) + instant->second;
   instant->flags |= TK_INSTANT_HOUR | TK_INSTANT_MINUTE | TK_INSTANT_SECOND | TK_INSTANT_DAY_SECONDS;
-  source += 8;
-  length -= 8;
+  source += 2;
+  length -= 2;
   if (length > 0 && (source[0] == '.' || source[0] == ',')) {
     source++;
     length--;
