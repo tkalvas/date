@@ -68,6 +68,8 @@ def generate_julian(d):
                 dj = 1
                 if mj > 12:
                     yj += 1
+                    if yj == 0:
+                        yj = 1
                     mj = 1
         d += 1
         wd = (wd + 1) % 7
