@@ -32,3 +32,12 @@ class TestJulian(unittest.TestCase):
     def test_4713(self):
         self.assertEqual(julian.to_julian(int(epoch.from_julian_date(-0.5))),
                          (-4713, 1, 1))
+
+    def assertEaster(self, y, m, d):
+        easter = julian.julian_easter(y)
+        self.assertEqual(core.to_gregorian(easter), (y, m, d))
+
+    def test_easter(self):
+        self.assertEaster(2015, 4, 12)
+        self.assertEaster(2018, 4, 8)
+        self.assertEaster(2024, 5, 5)

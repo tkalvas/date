@@ -31,3 +31,10 @@ def from_julian(yj1, mj, dj):
     yj = from_no_zero(yj1)
     y, my = divmod(12*yj + mj - 3, 12)
     return from_julian_y_dy(y, (153*my + 2)//5 + dj - 1)
+
+def julian_easter(y):
+    """Internal day counter of Julian easter in year."""
+    c = y//100 + 1
+    g = y % 19
+    e = (15 - 11*g) % 30
+    return 4 + (from_julian_y_dy(y, 20 + e - (e + g//11) // 29) + 3) // 7 * 7
