@@ -1,4 +1,5 @@
 import core
+import julian
 from types import SimpleNamespace
 
 def generate_gregorian(d):
@@ -45,3 +46,28 @@ def generate_iso_week_date(d):
                 yi += 1
                 wi = 1
         d += 1
+
+def generate_julian(d):
+    yj, mj, dj = julian.to_julian(d)
+    wd = core.weekday(d)
+    while True:
+        yield SimpleNamespace(day=d,
+                              year=yj,
+                              month=mj,
+                              day_of_month=dj,
+                              weekday=wd)
+        if (mj, dj) == (2, 28):
+            if yj % 4 == 0:
+                dj = 29
+            else:
+                mj, dj = 3, 1
+        else:
+            dj += 1
+            if dj > [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mj]:
+                mj += 1
+                dj = 1
+                if mj > 12:
+                    yj += 1
+                    mj = 1
+        d += 1
+        wd = (wd + 1) % 7
